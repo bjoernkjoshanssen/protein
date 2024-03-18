@@ -28,13 +28,21 @@ def morF {l:ℕ} -- 3/10/24
   let R := pathF' go moves ⟨i.1,Nat.lt.step i.2⟩
   exact f (moves i) R
 
+
+
+lemma sym_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ) (sym : ℤ×ℤ → ℤ×ℤ)
+-- This is a generalization of rotate_morfF and reflect_morfF, 3/18/2024.
 -- rotate_morfF finished 3/10/24. It vindicates some definition changes,
 -- although it still wasn't all that easy.
-lemma rotate_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
-  rotate (pathF' rect                  moves  k) =
-         (pathF' rect (morfF rotateIndex moves)) k
-  -- if we try this with pathF instead of pathF' then the dif_pos doesn't work
-:= by
+-- if we try this with pathF instead of pathF' then the dif_pos doesn't work
+  (h0 : sym 0 = 0)
+  (symIndex : Fin 4 → Fin 4)
+  (sym_basic : (u : ℤ × ℤ) → (c: Fin 4) → sym (rect c u) = rect (symIndex c) (sym u))
+  (sym_help : rect (symIndex (moves 0)) (sym 0) = rect (morfF symIndex moves 0) 0)
+  :
+  sym (pathF' rect                  moves  k) =
+      (pathF' rect (morfF symIndex moves)) k
+  := by
   induction l
   cases Nat.of_le_succ (Fin.is_le k)
 
@@ -42,21 +50,21 @@ lemma rotate_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
   subst this
   unfold pathF'
   simp
-  . rfl
+  . exact h0
 
   have : k = 1 := Fin.ext h
   subst this
   unfold pathF'
   simp
-  rw [rotate_basic 0 (moves 0)]
-  . rfl
+  rw [sym_basic 0 (moves 0)]
+  . exact sym_help
 
   by_cases h : k.1 < n.succ.succ
 
   let R := n_ih (λ i ↦ moves (Fin.castSucc i)) ⟨k.1,h⟩
   simp at R
-  have : pathF' rect (morfF rotateIndex (λ i ↦ moves (Fin.castSucc i))) ⟨k.1,h⟩
-       = pathF' rect (morfF rotateIndex moves )  k := by
+  have : pathF' rect (morfF symIndex (λ i ↦ moves (Fin.castSucc i))) ⟨k.1,h⟩
+       = pathF' rect (morfF symIndex moves )  k := by
         unfold pathF'
         simp
         unfold morfF
@@ -67,7 +75,8 @@ lemma rotate_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
        = pathF' rect (λ i ↦ moves (Fin.castSucc i)) ⟨k.1,h⟩ := by
     exact dif_pos h -- vindicating pathF'
   . rw [this]
-
+  rw [h0]
+  rfl
   have : k.1 = n.succ.succ := Nat.eq_of_lt_succ_of_not_lt k.2 h
   have : k = ⟨n.succ.succ, Nat.lt.base (Nat.succ (Nat.succ n))⟩
     := Fin.eq_mk_iff_val_eq.mpr this
@@ -76,7 +85,7 @@ lemma rotate_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
   simp at this
   unfold pathF'
   simp
-  repeat (rw [rotate_basic])
+  repeat (rw [sym_basic])
   let R₁ := n_ih (λ i ↦ moves (Fin.castSucc i)) ⟨n, Nat.lt.step (Nat.lt.base n)⟩
   unfold pathF' at R₁
   unfold morfF at R₁
@@ -108,7 +117,7 @@ lemma rotate_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
           n_ih (fun j => moves (Fin.castSucc j)) ⟨i.1,h⟩
         else rect (moves (Fin.last n)) (n_ih (fun j => moves (Fin.castSucc j)) (Fin.last n)))
       n
-      (fun j => rotateIndex (moves (Fin.castSucc (Fin.castSucc j)))) -- difference S,T
+      (fun j => symIndex (moves (Fin.castSucc (Fin.castSucc j)))) -- difference S,T
       (Fin.last n))
   let S' := Nat.rec (motive := fun {l} => (Fin l → Fin 4) → Fin (Nat.succ l) → ℤ × ℤ)
     (fun _ _ => 0)
@@ -116,113 +125,28 @@ lemma rotate_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
       if h : ↑i < Nat.succ n then
         n_ih (fun j => moves (Fin.castSucc j)) ⟨i.1,h⟩
       else rect (moves (Fin.last n)) (n_ih (fun j => moves (Fin.castSucc j)) (Fin.last n)))
-    n (fun j => rotateIndex (moves (Fin.castSucc (Fin.castSucc j))))
+    n (fun j => symIndex (moves (Fin.castSucc (Fin.castSucc j))))
     ⟨n,Nat.lt.base n⟩
 
   have hT: T = T' := rfl
   have hS: S = S' := rfl
-  have : (rotate T) = S := by
+  have : (sym T) = S := by
     rw [hT,hS]
-    exact R₁
+    simp
+    rw [R₁]
+    exact sym_help
   rw [this]
   rfl
+
+lemma rotate_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
+  rotate (pathF' rect                  moves  k) =
+         (pathF' rect (morfF rotateIndex moves)) k
+:= sym_morfF moves k rotate rfl rotateIndex rotate_basic rfl
 
 lemma reflect_morfF {l:ℕ} (moves: Fin l.succ → Fin 4) (k : Fin l.succ.succ):
   reflect (pathF' rect                  moves  k) =
          (pathF' rect (morfF reflectIndex moves)) k
-:= by
-  induction l
-  cases Nat.of_le_succ (Fin.is_le k)
-
-  have : k = 0 := Fin.le_zero_iff.mp h
-  subst this
-  unfold pathF'
-  simp
-  . rfl
-
-  have : k = 1 := Fin.ext h
-  subst this
-  unfold pathF'
-  simp
-  rw [reflect_basic 0 (moves 0)]
-  . rfl
-
-  by_cases h : k.1 < n.succ.succ
-
-  let R := n_ih (λ i ↦ moves (Fin.castSucc i)) ⟨k.1,h⟩
-  simp at R
-  have : pathF' rect (morfF reflectIndex (λ i ↦ moves (Fin.castSucc i))) ⟨k.1,h⟩
-       = pathF' rect (morfF reflectIndex moves )  k := by
-        unfold pathF'
-        simp
-        unfold morfF
-        rw [dif_pos h] -- apply? suggested: exact (dif_pos h).symm
-  rw [← this]
-  rw [← R]
-  have : pathF' rect        moves                    k
-       = pathF' rect (λ i ↦ moves (Fin.castSucc i)) ⟨k.1,h⟩ := by
-    exact dif_pos h -- vindicating pathF'
-  . rw [this]
-
-  have : k.1 = n.succ.succ := Nat.eq_of_lt_succ_of_not_lt k.2 h
-  have : k = ⟨n.succ.succ, Nat.lt.base (Nat.succ (Nat.succ n))⟩
-    := Fin.eq_mk_iff_val_eq.mpr this
-  subst this
-
-  simp at this
-  unfold pathF'
-  simp
-  repeat (rw [reflect_basic])
-  let R₁ := n_ih (λ i ↦ moves (Fin.castSucc i)) ⟨n, Nat.lt.step (Nat.lt.base n)⟩
-
-  unfold pathF' at R₁
-  unfold morfF at R₁
-  simp at R₁
-
-  let T  := (Nat.rec (motive := fun {l} => (Fin l → Fin 4) → Fin (Nat.succ l) → ℤ × ℤ)
-      (fun _ _ => 0)
-      (fun n n_ih moves i =>
-        if h : i.1 < Nat.succ n then
-          n_ih (fun j => moves (Fin.castSucc j)) ⟨ i.1,h⟩
-        else rect (moves (Fin.last n)) (n_ih (fun j => moves (Fin.castSucc j)) (Fin.last n)))
-      n
-      (fun j => moves (Fin.castSucc (Fin.castSucc j))) -- difference S,T
-      (Fin.last n)) -- difference T, T'
-  let T' := (Nat.rec (motive := fun {l} => (Fin l → Fin 4) → Fin (Nat.succ l) → ℤ × ℤ)
-      (fun _ _ => 0)
-      (fun n n_ih moves i =>
-        if h : ↑i < Nat.succ n then
-          n_ih (fun j => moves (Fin.castSucc j)) ⟨i.1,h⟩
-        else rect (moves (Fin.last n)) (n_ih (fun j => moves (Fin.castSucc j)) (Fin.last n)))
-      n
-      (fun j => moves (Fin.castSucc (Fin.castSucc j)))
-      ⟨n,Nat.lt.base n⟩) -- difference T, T'
-
-  let S := (Nat.rec (motive := fun {l} => (Fin l → Fin 4) → Fin (Nat.succ l) → ℤ × ℤ)
-      (fun _ _ => 0)
-      (fun n n_ih moves i =>
-        if h : i.1 < Nat.succ n then
-          n_ih (fun j => moves (Fin.castSucc j)) ⟨i.1,h⟩
-        else rect (moves (Fin.last n)) (n_ih (fun j => moves (Fin.castSucc j)) (Fin.last n)))
-      n
-      (fun j => reflectIndex (moves (Fin.castSucc (Fin.castSucc j)))) -- difference S,T
-      (Fin.last n))
-  let S' := Nat.rec (motive := fun {l} => (Fin l → Fin 4) → Fin (Nat.succ l) → ℤ × ℤ)
-    (fun _ _ => 0)
-    (fun n n_ih moves i =>
-      if h : ↑i < Nat.succ n then
-        n_ih (fun j => moves (Fin.castSucc j)) ⟨i.1,h⟩
-      else rect (moves (Fin.last n)) (n_ih (fun j => moves (Fin.castSucc j)) (Fin.last n)))
-    n (fun j => reflectIndex (moves (Fin.castSucc (Fin.castSucc j))))
-    ⟨n,Nat.lt.base n⟩
-
-  have hT: T = T' := rfl
-  have hS: S = S' := rfl
-  have : (reflect T) = S := by
-    rw [hT,hS]
-    exact R₁
-  rw [this]
-  rfl
+:= sym_morfF moves k reflect rfl reflectIndex reflect_basic rfl
 
 theorem rotate_preserves_pt_loc'F {l:ℕ}
 -- completed 3/10/24 at the cost of adding ".succ" to l
