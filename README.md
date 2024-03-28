@@ -6,5 +6,6 @@ Lean and Python code for "Nonmonotonicity of the value function in HP protein fo
     - StecherConjecture_SpringBreak2024
       * StecherConjecture-GroupComputations
       * StecherConjecture-pathF'
-      * StecherConjecture-pathF
+      * StecherConjectureF
+        - StecherConjecture-pathF
       * Handshake
