@@ -4,8 +4,8 @@ Lean and Python code for "Nonmonotonicity of the value function in HP protein fo
 - MonoPred
   * BacktrackingVerification
     - StecherConjecture_SpringBreak2024
-      * StecherConjecture-GroupComputations
-      * StecherConjecture-pathF'
-      * StecherConjectureF
-        - StecherConjecture-pathF
-      * Handshake
+      * StecherConjecture-GroupComputations (some not-very-important calculations)
+      * StecherConjectureF  (using `Fin l → β` types instead of `Vector β l`)
+        - StecherConjecture-pathF (using infinity to define path)
+        - StecherConjecture-pathF' (purely finite version of path)
+      * `Handshake` (prove upper bound `l*b/2` on the score, where `l` is word length and `b` is number of moves, using Handshake Lemma)
