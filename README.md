@@ -1,7 +1,7 @@
 # protein
 Lean and Python code for "Nonmonotonicity of the value function in HP protein folding models"
 
-- MonoPred
+- MonoPred (introduce the idea of a monotone predicate together with an additional predicate at the leaves, for use in backtracking)
   * BacktrackingVerification
     - StecherConjecture_SpringBreak2024
       * StecherConjecture-GroupComputations (some not-very-important calculations)
